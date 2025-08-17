@@ -1,120 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FAARIZ BOT</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faariz Bot Panel</title>
   <style>
-    body { font-family: Arial; text-align: center; background: #121212; color: white; }
-    button { padding: 10px; margin: 5px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer; }
-    .primary { background: #1e90ff; color: white; }
-    .success { background: #28a745; color: white; }
-    .danger { background: #dc3545; color: white; }
-    input { padding: 8px; font-size: 16px; border-radius: 5px; border: none; margin: 5px; }
-    #licensePanel { margin-top: 50px; }
+    body { background:#1c1c1c; font-family: Arial; color: #fff; display:flex; justify-content:center; align-items:center; height:100vh; }
+    .panel { background:#2a2a2a; padding:20px; border-radius:10px; width:320px; box-shadow:0 0 15px rgba(0,0,0,0.5); }
+    h2 { margin:0 0 15px 0; font-size:18px; }
+    select, input { width:100%; padding:6px; margin:5px 0; border-radius:5px; border:none; }
+    button { padding:6px 10px; margin:4px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; }
+    .start { background:#28a745; color:#fff; }
+    .stop { background:#dc3545; color:#fff; }
+    .reset { background:#17a2b8; color:#fff; }
+    .refresh { background:#ffc107; color:#000; }
+    .row { margin:8px 0; }
+    .stat { font-size:14px; margin:4px 0; }
+    .profit { color:#00ff99; }
+    .losses { color:#ff4444; }
+    .target { border:1px solid #444; background:#111; color:#fff; }
+    .futures { background:#111; padding:8px; border-radius:5px; margin-top:10px; font-size:13px; }
   </style>
 </head>
 <body>
+  <div class="panel">
+    <h2>🧠 FreeLitecoin Bot Control</h2>
 
-  <!-- License Panel -->
-  <div id="licensePanel">
-    <h2>🔑 Enter License Key</h2>
-    <input type="text" id="licenseKey" placeholder="Enter your license">
-    <button class="primary" onclick="checkLicense()">Verify</button>
+    <div class="row">
+      Mode: 
+      <select>
+        <option>Aggressive</option>
+        <option>Normal</option>
+        <option>Safe</option>
+      </select>
+    </div>
+
+    <div class="row">
+      HL Protection: 
+      <select>
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <button class="start">▶ Start</button>
+      <button class="stop">⏹ Stop</button>
+      <button class="reset">♻ Reset</button>
+      <button class="refresh">🔄 Refresh</button>
+    </div>
+
+    <div class="row">
+      Delay: 
+      <button>500ms</button> <button>700ms</button>
+      <button>800ms</button> <button>900ms</button>
+      <button>1s</button>
+    </div>
+
+    <div class="row stat">📊 Rolls: <span id="rolls">60</span> | ❌ Losses: <span class="losses" id="losses">0</span></div>
+    <div class="row stat">💰 Profit: <span class="profit" id="profit">0.00056279 LTC</span></div>
+    <div class="row stat">📈 Profit %: <span id="profitPercent">9.97%</span></div>
+    <div class="row stat">🎯 Direction: <span id="direction">HIGH</span></div>
+    <div class="row stat">🎲 Multiplier on Loss: <span id="multiplier">2x</span></div>
+    <div class="row stat">⚙ Current Mode: <span id="mode">Aggressive</span></div>
+    <div class="row stat">🛡 Protection: <span id="protection">High</span></div>
+
+    <div class="row">
+      🎯 Target Profit: <input type="text" id="targetProfit" class="target" value="0.00010000">
+    </div>
+
+    <div class="row futures">
+      ✨ Futures: <br>
+      - Dynamic Delay: <b>ON</b><br>
+      - Balance Auto Update: <b>OFF</b><br>
+      - Auto Direction Change: <b>ON</b>
+    </div>
   </div>
-
-  <!-- Bot Panel (Initially hidden) -->
-  <div id="botPanel" style="display:none;">
-    <h1>FAARIZ BOT 🚀</h1>
-    <p>Balance: <span id="balance">0.00000000</span></p>
-
-    <label>Base Bet:</label>
-    <input type="number" id="baseBet" step="0.00000001" value="0.00000010"><br>  
-
-    <label>Win Chance:</label>
-    <input type="number" id="winChance" min="1" max="95" value="50"><br>  
-
-    <button class="success" onclick="bet('low')">Bet Low</button>  
-    <button class="success" onclick="bet('high')">Bet High</button><br>  
-
-    <button class="primary" onclick="multiplyBet()">Multiply 2x</button>  
-    <button class="primary" onclick="divideBet()">Divide 2÷</button><br>  
-
-    <button class="danger" onclick="startAuto()">Start Auto Bet</button>  
-    <button class="danger" onclick="stopAuto()">Stop Auto Bet</button>  
-
-    <p id="status"></p>
-  </div>
-
-  <script>
-    let autoBetInterval = null;
-    const serverURL = "https://faariz-bot-server.onrender.com"; // உங்கள் server link
-
-    // ✅ License Verification
-    function checkLicense() {
-      const key = document.getElementById("licenseKey").value;
-
-      fetch(serverURL + "/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          document.getElementById("licensePanel").style.display = "none";
-          document.getElementById("botPanel").style.display = "block";
-          updateBalance();
-        } else {
-          alert("❌ Invalid License Key! Access Denied.");
-        }
-      })
-      .catch(err => {
-        alert("Server error: " + err);
-      });
-    }
-
-    // ✅ Balance Update
-    function updateBalance() {
-      fetch(serverURL + "/balance")
-        .then(res => res.json())
-        .then(data => { document.getElementById("balance").innerText = data.balance; });
-    }
-
-    // ✅ Betting Functions
-    function bet(type) {
-      const betAmount = parseFloat(document.getElementById("baseBet").value);
-      const chance = parseInt(document.getElementById("winChance").value);
-      fetch(serverURL + "/bet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, betAmount, chance })
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("status").innerText = data.message;
-        updateBalance();
-      });
-    }
-
-    function multiplyBet() {
-      let base = parseFloat(document.getElementById("baseBet").value);
-      document.getElementById("baseBet").value = (base * 2).toFixed(8);
-    }
-
-    function divideBet() {
-      let base = parseFloat(document.getElementById("baseBet").value);
-      document.getElementById("baseBet").value = (base / 2).toFixed(8);
-    }
-
-    function startAuto() {
-      if (autoBetInterval) return;
-      autoBetInterval = setInterval(() => { bet('low'); }, 2000);
-    }
-
-    function stopAuto() {
-      clearInterval(autoBetInterval);
-      autoBetInterval = null;
-    }
-  </script>
 </body>
 </html>
