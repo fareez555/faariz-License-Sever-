@@ -10,32 +10,58 @@
     .success { background: #28a745; color: white; }
     .danger { background: #dc3545; color: white; }
     input { padding: 8px; font-size: 16px; border-radius: 5px; border: none; margin: 5px; }
+    #botPanel { display: none; margin-top: 20px; }
   </style>
 </head>
 <body>
   <h1>FAARIZ BOT 🚀</h1>
-  <p>Balance: <span id="balance">0.00000000</span></p>
-  
-  <label>Base Bet:</label>
-  <input type="number" id="baseBet" step="0.00000001" value="0.00000010"><br>
-  
-  <label>Win Chance:</label>
-  <input type="number" id="winChance" min="1" max="95" value="50"><br>
-  
-  <button class="success" onclick="bet('low')">Bet Low</button>
-  <button class="success" onclick="bet('high')">Bet High</button><br>
-  
-  <button class="primary" onclick="multiplyBet()">Multiply 2x</button>
-  <button class="primary" onclick="divideBet()">Divide 2÷</button><br>
-  
-  <button class="danger" onclick="startAuto()">Start Auto Bet</button>
-  <button class="danger" onclick="stopAuto()">Stop Auto Bet</button>
-  
-  <p id="status"></p>
-  
+
+  <!-- License Panel -->
+  <div id="licensePanel">
+    <h3>Enter License Key 🔑</h3>
+    <input type="text" id="licenseKey" placeholder="Enter your license key">
+    <button class="primary" onclick="checkLicense()">Activate</button>
+    <p id="licenseStatus"></p>
+  </div>
+
+  <!-- Bot Panel -->
+  <div id="botPanel">
+    <p>Balance: <span id="balance">0.00000000</span></p>
+
+    <label>Base Bet:</label>
+    <input type="number" id="baseBet" step="0.00000001" value="0.00000010"><br>
+
+    <label>Win Chance:</label>
+    <input type="number" id="winChance" min="1" max="95" value="50"><br>
+
+    <button class="success" onclick="bet('low')">Bet Low</button>
+    <button class="success" onclick="bet('high')">Bet High</button><br>
+
+    <button class="primary" onclick="multiplyBet()">Multiply 2x</button>
+    <button class="primary" onclick="divideBet()">Divide 2÷</button><br>
+
+    <button class="danger" onclick="startAuto()">Start Auto Bet</button>
+    <button class="danger" onclick="stopAuto()">Stop Auto Bet</button>
+
+    <p id="status"></p>
+  </div>
+
   <script>
     let autoBetInterval = null;
-    const serverURL = "https://faariz-bot-server.onrender.com"; // உங்கள் server link
+    const serverURL = "https://faariz-bot-server.onrender.com"; 
+    const VALID_KEY = "FAARIZ-123"; // 🔑 உன் secret license key (edit பண்ணலாம்)
+
+    function checkLicense() {
+      const key = document.getElementById("licenseKey").value.trim();
+      if (key === VALID_KEY) {
+        document.getElementById("licensePanel").style.display = "none";
+        document.getElementById("botPanel").style.display = "block";
+        document.getElementById("licenseStatus").innerText = "";
+        updateBalance();
+      } else {
+        document.getElementById("licenseStatus").innerText = "❌ Invalid License Key!";
+      }
+    }
 
     function updateBalance() {
       fetch(serverURL + "/balance")
@@ -77,8 +103,6 @@
       clearInterval(autoBetInterval);
       autoBetInterval = null;
     }
-
-    updateBalance();
   </script>
 </body>
 </html>
